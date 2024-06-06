@@ -17,7 +17,10 @@ masc = Gray.(masc)
 # Load output
 output = zeros(size(image))
 
-# Create an array to save dimensions
+# Create an array to save image dimensions
+image_size = [size(image, 1) size(image, 2)]
+
+# Create an array to save kernel dimensions
 kernel_size = [size(masc, 1) size(masc, 2)]
 
 ##
@@ -28,6 +31,7 @@ IMAGE = CuArray(image)
 MASC = CuArray(masc)
 OUTPUT = CuArray(output)
 OUTPUT = Gray.(OUTPUT)
+IMAGE_SIZE = CuArray(image_size)
 KERNEL_SIZE = CuArray(kernel_size)
 
 ##
@@ -37,7 +41,7 @@ backend = get_backend(IMAGE)
 
 
 # Convolution function in device
-@kernel function mul2_kernel(A,B,C,kernel_size)
+@kernel function mul2_kernel(A,B,C,kernel_size, image_size)
   
 
     #Globa bidimensional index (x,y)
@@ -48,7 +52,7 @@ backend = get_backend(IMAGE)
     pad_u = convert(Int, a)
 
     # Condition for always being inseide the Image
-    if I[1] <= 1080-pad_u && I[2] <= 1920-pad_u && I[1]>pad_u && I[2]>pad_u
+    if I[1] <= image_size[1]-pad_u && I[2] <= image_size[2]-pad_u && I[1]>pad_u && I[2]>pad_u
 
       sum = 0
 
@@ -73,7 +77,7 @@ backend = get_backend(IMAGE)
 end
 
 # Function call and time registrer
-@time mul2_kernel(backend, 64)(IMAGE,MASC,OUTPUT,KERNEL_SIZE;ndrange=size(IMAGE))
+@time mul2_kernel(backend, 64)(IMAGE,MASC,OUTPUT,KERNEL_SIZE, IMAGE_SIZE;ndrange=size(IMAGE))
 
 
 # Output
