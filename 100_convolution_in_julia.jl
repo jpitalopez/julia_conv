@@ -1,11 +1,12 @@
 ##
 
-
+using Statistics
 using CUDA
 using KernelAbstractions
 using Pkg
 using Images
 using ImageView
+
 ##
 
 # Load Image
@@ -82,18 +83,61 @@ backend = get_backend(IMAGE)
       
     end
 
+    @synchronize 
+  
+
 end
 
 ##
 
-
 # Function call and time registrer
-@time mul2_kernel(backend, 64)(IMAGE,MASC,OUTPUT,KERNEL_SIZE, IMAGE_SIZE;ndrange=size(IMAGE))
+CUDA.@elapsed mul2_kernel(backend, 64)(IMAGE,MASC,OUTPUT,KERNEL_SIZE, IMAGE_SIZE;ndrange=size(IMAGE))
 
 
+
+##
+
+
+
+
+
+# Num iterations
+num_iteracions = 100
+
+# Load times
+times = Float64[]
+
+
+# 100 iteractions Foor loop
+for i in 1:num_iteracions
+  
+  
+  # Call to the gpu function
+  
+  time_elapsed = CUDA.@elapsed mul2_kernel(backend, 64)(IMAGE,MASC,OUTPUT,KERNEL_SIZE, IMAGE_SIZE;ndrange=size(IMAGE))
+
+  time_elapsed = tiempo_transcurrido * 1000
+  
+  
+  
+  # Add registrer to times vector
+  push!(times, time_elapsed)
+  sleep(0.1)
+  
+end
+
+
+# Compute mean and var
+mean_times = mean(times)
+var_times = var(times)
+
+# Show results
+println("Mean time: ", mean_times, " ms")
+println("Var time: ", var_times, " ms")
 
 
 ##
 
 # Output
 C = Array(OUTPUT)
+
