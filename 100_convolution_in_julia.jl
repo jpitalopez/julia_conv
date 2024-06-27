@@ -12,7 +12,7 @@ using ImageView
 # Load Image
 
 
-image = load("Lions_Glance_Snout_Black_and_white_552727_1920x1080.jpg")
+image = load("Lions.jpg")
 #image = load("Grayscale_Cat.jpg")
 
 
