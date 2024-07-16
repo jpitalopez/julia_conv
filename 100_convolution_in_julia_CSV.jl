@@ -1,14 +1,17 @@
 ##
 
+using Statistics
 using CUDA
 using KernelAbstractions
 using Pkg
 using Images
 using ImageView
+using CSV, DataFrames
+
+
 ##
 
 # Load Image
-
 
 image = load("Lions.jpg")
 #image = load("Grayscale_Cat.jpg")
@@ -29,7 +32,6 @@ kernel_size = [size(masc, 1) size(masc, 2)]
 
 ##
 
-
 # Move arrays to cuda device
 IMAGE = CuArray(image)
 MASC = CuArray(masc)
@@ -48,7 +50,7 @@ backend = get_backend(IMAGE)
 @kernel function mul2_kernel(A,B,C,kernel_size, image_size)
   
 
-    #Globa bidimensional index (x,y)
+    #Globa bidimensional index (x,y)patch_artist=True
     I= @index(Global,Cartesian)
 
     #Get padding unit
@@ -81,13 +83,63 @@ backend = get_backend(IMAGE)
       
     end
 
+    @synchronize 
+  
+
 end
 
 ##
 
-
 # Function call and time registrer
-time = @CUDA.elapsed mul2_kernel(backend, 32)(IMAGE,MASC,OUTPUT,KERNEL_SIZE, IMAGE_SIZE;ndrange=size(IMAGE))
+CUDA.@elapsed mul2_kernel(backend, 64)(IMAGE,MASC,OUTPUT,KERNEL_SIZE, IMAGE_SIZE;ndrange=size(IMAGE))
+
+
+
+##
+
+
+
+# Num iterations
+num_iteracions = 100
+
+# Load times
+times = Float64[]
+
+
+# 100 iteractions Foor loop
+for i in 1:num_iteracions
+  
+  
+  # Call to the gpu function
+  
+  time_elapsed = CUDA.@elapsed mul2_kernel(backend, 64)(IMAGE,MASC,OUTPUT,KERNEL_SIZE, IMAGE_SIZE;ndrange=size(IMAGE))
+
+  time_elapsed = time_elapsed * 1000
+  
+  
+  
+  # Add registrer to times vector
+  push!(times, time_elapsed)
+
+  
+end
+
+# Especifica la ruta donde quieres guardar el archivo CSV
+csv_file = "times_29.csv"
+
+
+df = DataFrame(times = times)
+
+# Escribe el arreglo `times` en el archivo CSV usando CSV.write
+CSV.write(csv_file, df)
+
+# Compute mean and var
+mean_times = mean(times)
+var_times = var(times)
+
+# Show results
+println("Mean time: ", mean_times, " ms")
+println("Var time: ", var_times, " ms")
 
 
 ##
@@ -95,9 +147,3 @@ time = @CUDA.elapsed mul2_kernel(backend, 32)(IMAGE,MASC,OUTPUT,KERNEL_SIZE, IMA
 # Output
 C = Array(OUTPUT)
 
-# Show time results
-println("GPU execution time: ", time*1000, " ms")
-
-
-# Show assembly code
-@code_native mul2_kernel(backend, 64)(IMAGE,MASC,OUTPUT,KERNEL_SIZE, IMAGE_SIZE;ndrange=size(IMAGE))

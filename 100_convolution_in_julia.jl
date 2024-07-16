@@ -7,6 +7,8 @@ using Pkg
 using Images
 using ImageView
 
+
+
 ##
 
 # Load Image
@@ -116,13 +118,13 @@ for i in 1:num_iteracions
   
   time_elapsed = CUDA.@elapsed mul2_kernel(backend, 64)(IMAGE,MASC,OUTPUT,KERNEL_SIZE, IMAGE_SIZE;ndrange=size(IMAGE))
 
-  time_elapsed = tiempo_transcurrido * 1000
+  time_elapsed = time_elapsed * 1000
   
   
   
   # Add registrer to times vector
   push!(times, time_elapsed)
-  sleep(0.1)
+
   
 end
 
